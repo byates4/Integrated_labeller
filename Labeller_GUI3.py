@@ -5,25 +5,20 @@ Created on Fri Sep 11 13:08:57 2020
 @author: bcyat
 """
 
-import tkinter
 
 from tkinter import Tk
 from tkinter import *
 
 import boto3
 from PIL import ImageTk,Image
-import matplotlib.image as mpimg
-import matplotlib.pyplot as plt
 import os
 
 def resize(filename):      
     image = str(filename)
-    print(filename)
     imgsize = Image.open(image).getbbox()
     divisor = int(imgsize[3])
     imgsize1 = int(imgsize[2])/divisor*500
     size = (int(imgsize1), 500)
-    print(size)
     imagebig = Image.open(image).resize(size)
     return imagebig
 
@@ -51,12 +46,12 @@ def s32local(s3_bucket, local_path):
         path, filename = os.path.split(s3_object.key)
         my_bucket.download_file(s3_object.key, filename)
 
-def create_filelist(local_path):
+def create_filelist():
     filenames = [] 
         #main loop iterating through images in temp file
-    for file in os.listdir(local_path):
+    for file in os.listdir(os.getcwd()):
          filename = os.fsdecode(file)
-         if filename.endswith(".jpg") or filename.endswith(".png"):
+         if file.endswith(".jpg") or file.endswith(".png"):
              filenames.append(filename)
              continue
          else:
@@ -84,21 +79,23 @@ def upload2s3(labellist, filenames):
             print(filenames[f]+' does not have a ramp')
 
             
-def Delete_temps(local_path):
-    filelist = [ f for f in os.listdir(local_path) ]
+def Delete_temps():
+    filelist = [ f for f in os.listdir(os.getcwd()) ]
     for f in filelist:
-        os.remove(os.path.join(local_path, f))
+        if f[-1] == 'g':
+            print('deleting ' + f)
+            os.remove(f)
  
     
-s32local('unlabelledimages','C:/Users/bcyat/Documents/Temp_S3store' )
-window = Tk()
+s32local('unlabelledimages', 'Temp_S3store/' )
+window = Toplevel()
 
 window.title("Join")
 window.geometry("3000x3000")
 window.configure(background='grey')
 
 
-filenames = create_filelist('C:/Users/bcyat/Documents/Temp_S3store')
+filenames = create_filelist()
 imnum = len(filenames) #number of unlabelled images
 
 
@@ -127,4 +124,5 @@ window.mainloop()
     
 upload2s3(labellist,filenames)
 
-Delete_temps('C:/Users/bcyat/Documents/Temp_S3store')    
+Delete_temps()
+

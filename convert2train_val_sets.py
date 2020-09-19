@@ -5,13 +5,9 @@ Created on Tue Sep 15 14:03:15 2020
 @author: bcyat
 """
 
-import numpy as np
-import os
-import PIL
-import PIL.Image
 import tensorflow as tf
-import tensorflow_datasets as tfds
-from tensorflow.keras import layers
+
+import s3_saver
 
 def create_sets(data_dir, validation_split):
     
@@ -40,4 +36,8 @@ def create_sets(data_dir, validation_split):
     print(class_names)
     
     return [train_ds,val_ds,class_names]
+
+data_dir = s3_saver.s3classes2local()
+train_set, val_set, class_list = create_sets(data_dir, .2)
+s3_saver.delete_all_temps()
 
