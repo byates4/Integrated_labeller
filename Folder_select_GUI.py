@@ -41,35 +41,30 @@ def upload_file(file_name, bucket, object_name=None):
         return False
     return True
 
-
-#get image directory
-root = Tk()
-root.directory = filedialog.askdirectory()
-Image_dir = root.directory
-print(Image_dir)
-directory_in_str = Image_dir
-
-#add images to s3
-directory = os.fsencode(directory_in_str)
-
-
-
-
-
-
-os.chdir(directory_in_str)
-for file in os.listdir(directory):
-     filename = os.fsdecode(file)
-     
-     if filename.endswith(".jpg") or filename.endswith(".png"): 
-         filepath = os.path.join(directory_in_str, filename)
-         print(filepath)
-         upload_file(filename, "unlabelledimages")
-         continue
-     else:
-         continue
-
-root.mainloop()
+def folder_select():
+    #get image directory
+    root = Tk()
+    root.directory = filedialog.askdirectory()
+    Image_dir = root.directory
+    print(Image_dir)
+    directory_in_str = Image_dir
+    
+    #add images to s3
+    directory = os.fsencode(directory_in_str)
+    
+    os.chdir(directory_in_str)
+    for file in os.listdir(directory):
+         filename = os.fsdecode(file)
+         
+         if filename.endswith(".jpg") or filename.endswith(".png"): 
+             filepath = os.path.join(directory_in_str, filename)
+             print(filepath)
+             upload_file(filename, "unlabelledimages")
+             continue
+         else:
+             continue
+    
+    root.mainloop()
 
 
 

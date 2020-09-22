@@ -60,7 +60,6 @@ def download_s3_folder(bucket_name, filenames):
         
         #print(path)
         path = loc_path + s3path
-        print(path)
         bucket.download_file(s3path, path)
 
 
@@ -81,5 +80,5 @@ def delete_all_temps():
     Delete_temps('Temp_class_store/not_a_sidewalk')
     Delete_temps('Temp_class_store/parallel')
 
-s3classes2local()
+
 
