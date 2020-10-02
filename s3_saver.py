@@ -3,8 +3,6 @@ Created on Thu Sep 17 09:20:51 2020
 @author: bcyat
 """
 
-
-
 import os
 import boto3
 
@@ -39,14 +37,13 @@ def download_s3_folder(bucket_name, filenames):
     s3 = boto3.resource("s3")
     bucket = s3.Bucket(bucket_name)
     # Directory 
-    #directory = '/perpendicular/'
-      
+    #directory = '/perpendicular/'  
     # Parent Directory path 
     loc_path = 'Temp_class_store/'
-      
+    down_count = 0 
     # Path 
     #os.mkdir(loc_path)
-    
+    #print(filenames)
     for s3path in filenames:
         
         '''
@@ -57,20 +54,25 @@ def download_s3_folder(bucket_name, filenames):
         print(obj.key)
         print(target)
         '''
-        
-        #print(path)
+        down_count += 1
+        print(s3path + " is downloaded")
         path = loc_path + s3path
-        bucket.download_file(s3path, path)
-
+        #print(path)
+        try:
+            bucket.download_file(s3path, path)
+            
+        except:
+            continue
 
 
 def s3classes2local():
     bucket = "labelled2"
     filenames = file_list(bucket)
+    
+    
         
-            
     download_s3_folder('labelled2',filenames)
-    return 'Temp_class_store/'
+    return ['Temp_class_store/', len(filenames)]
     
     
 def delete_all_temps():   

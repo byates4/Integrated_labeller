@@ -29,7 +29,10 @@ def chng(filename):
     global imnum, labellist, ramp
     imnum -= 1
     labellist.append(ramp.get())
-    Label(window, image= photo2)    
+    imagsh = Label(self, image= photo2)
+    imagsh.image = sized
+    imagsh.pack()
+        
 
 def s32local(s3_bucket, local_path):
     #initiate s3 resource
@@ -38,17 +41,26 @@ def s32local(s3_bucket, local_path):
     # select bucket
     my_bucket = s3.Bucket(s3_bucket)
     
+    #ogdir = os.getcwd()
+    #print(ogdir)
     # download images to temp directory
     os.chdir(local_path)
     print("Loading Images from S3")
+    ob_tot = len(list(my_bucket.objects.all()))
+    im_count = 1
     for s3_object in my_bucket.objects.all():
         # Need to split s3_object.key into path and file name, else it will give error file not found.
+        
         path, filename = os.path.split(s3_object.key)
         my_bucket.download_file(s3_object.key, filename)
+        print("Loaded image " + str(im_count) + " of " + str(ob_tot))
+        im_count += 1
+    #os.chdir(ogdir)
 
 def create_filelist():
     filenames = [] 
         #main loop iterating through images in temp file
+    os.chdir('Temp_S3store')
     for file in os.listdir(os.getcwd()):
          filename = os.fsdecode(file)
          if file.endswith(".jpg") or file.endswith(".png"):
@@ -60,8 +72,11 @@ def create_filelist():
 
 def upload2s3(labellist, filenames): 
     s3_client = boto3.client('s3')
-    print(filenames)        
+    print(filenames)
+    print(str(len(labellist)) + ' files were labelled')
     for f in range(len(filenames)):
+        if f+1 > len(labellist):
+            break
         if labellist[f] == 2:
             response = s3_client.upload_file(filenames[f], 'labelled2', 'perpendicular/{}'.format(filenames[f]))
             print(filenames[f] + ' is perpendicular')
@@ -77,7 +92,7 @@ def upload2s3(labellist, filenames):
         if labellist[f] == 6:
             response = s3_client.upload_file(filenames[f], 'labelled2', 'no_ramp/{}'.format(filenames[f]))
             print(filenames[f]+' does not have a ramp')
-
+        
             
 def Delete_temps():
     filelist = [ f for f in os.listdir(os.getcwd()) ]
@@ -85,38 +100,41 @@ def Delete_temps():
         if f[-1] == 'g':
             print('deleting ' + f)
             os.remove(f)
-
+'''
 def close_window (root): 
     root.destroy()
+'''
+
 
 def labeller():
     global imnum, panel, labellist, ramp, window
-    print(os.getcwd())
-    s32local('unlabelledimages', 'Temp_S3store/' )
+    #print(os.getcwd())
+    #s32local('unlabelledimages', 'Temp_S3store/' )
+    '''
     window = Toplevel()
     
     window.title("Join")
     window.geometry("3000x3000")
     window.configure(background='grey')
+    '''
     
-    
-    filenames = create_filelist()
-    imnum = len(filenames) #number of unlabelled images
+    #filenames = create_filelist()
+    #imnum = len(filenames) #number of unlabelled images
     
     
     resized = resize(filenames[0])
     #Creates a Tkinter-compatible photo image, which can be used everywhere Tkinter expects an image object.
     img = ImageTk.PhotoImage(resized)
     #The Label widget is a standard Tkinter widget used to display a text or image on the screen.
-    panel = Label(window, image = img)
     
+    panel = Label(window, image = img)    
     panel.pack(side = "bottom", fill = "both", expand = "yes")
     
-    ramp = IntVar()
-    ramp.set(1)
+    #ramp = IntVar()
+    #ramp.set(1)
     
     labellist = [] 
-    
+    '''
     Radiobutton(window, text="blended transition", variable = ramp, value=4,indicatoron = 0).pack()
     Radiobutton(window, text="perpendicular", variable = ramp, value=2,indicatoron = 0).pack()
     Radiobutton(window, text="parallel", variable = ramp, value=3, indicatoron = 0).pack()
@@ -124,12 +142,12 @@ def labeller():
     Radiobutton(window, text="?", variable = ramp, value=5, indicatoron = 0).pack()
     Button(window, text="OK", command = lambda: chng(filenames[imnum-1])).pack()
     Button(window, text = "Done Labelling", command = lambda: close_window(window)).pack(side = BOTTOM)
-           
-    window.mainloop()
+    '''      
+    #window.mainloop()
     print(filenames)    
     upload2s3(labellist,filenames)
     
     Delete_temps()
-    #os.chdir('C:/Users/bcyat/Documents/GitHub/Integrated_labeller')
+    #dchdir('C:/Users/bcyat/Documents/GitHub/Integrated_labeller')
 
 
