@@ -39,10 +39,11 @@ def download_s3_folder(bucket_name, filenames):
     # Directory 
     #directory = '/perpendicular/'  
     # Parent Directory path 
+    os.chdir('C:/Users/bcyat/Documents/GitHub/Integrated_labeller')
     loc_path = 'Temp_class_store/'
     down_count = 0 
     # Path 
-    #os.mkdir(loc_path)
+    print(os.getcwd())
     #print(filenames)
     for s3path in filenames:
         
@@ -66,12 +67,12 @@ def download_s3_folder(bucket_name, filenames):
 
 
 def s3classes2local():
-    bucket = "labelled2"
+    bucket = "labelled1"
     filenames = file_list(bucket)
     
     
         
-    download_s3_folder('labelled2',filenames)
+    download_s3_folder('labelled1',filenames)
     return ['Temp_class_store/', len(filenames)]
     
     

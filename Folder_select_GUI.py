@@ -59,7 +59,7 @@ def folder_select():
          if filename.endswith(".jpg") or filename.endswith(".png"): 
              filepath = os.path.join(directory_in_str, filename)
              print(filepath)
-             upload_file(filename, "unlabelledimages")
+             upload_file(filename, "unlabelledimages1")
              continue
          else:
              continue

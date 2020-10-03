@@ -60,7 +60,7 @@ def s32local(s3_bucket, local_path):
 def create_filelist():
     filenames = [] 
         #main loop iterating through images in temp file
-    os.chdir('Temp_S3store')
+    #os.chdir('Temp_S3store')
     for file in os.listdir(os.getcwd()):
          filename = os.fsdecode(file)
          if file.endswith(".jpg") or file.endswith(".png"):
@@ -78,19 +78,19 @@ def upload2s3(labellist, filenames):
         if f+1 > len(labellist):
             break
         if labellist[f] == 2:
-            response = s3_client.upload_file(filenames[f], 'labelled2', 'perpendicular/{}'.format(filenames[f]))
+            response = s3_client.upload_file(filenames[f], 'labelled1', 'perpendicular/{}'.format(filenames[f]))
             print(filenames[f] + ' is perpendicular')
         if labellist[f] == 3:
-            response = s3_client.upload_file(filenames[f], 'labelled2', 'parallel/{}'.format(filenames[f]))
+            response = s3_client.upload_file(filenames[f], 'labelled1', 'parallel/{}'.format(filenames[f]))
             print(filenames[f]+' is parallel')
         if labellist[f] == 4:
-            response = s3_client.upload_file(filenames[f], 'labelled2', 'blended_transition/{}'.format(filenames[f]))
+            response = s3_client.upload_file(filenames[f], 'labelled1', 'blended_transition/{}'.format(filenames[f]))
             print(filenames[f]+' is a blended transition')
         if labellist[f] == 5:
-            response = s3_client.upload_file(filenames[f], 'labelled2', 'not_a_sidewalk/{}'.format(filenames[f]))
+            response = s3_client.upload_file(filenames[f], 'labelled1', 'not_a_sidewalk/{}'.format(filenames[f]))
             print(filenames[f]+' is fucked up')            
         if labellist[f] == 6:
-            response = s3_client.upload_file(filenames[f], 'labelled2', 'no_ramp/{}'.format(filenames[f]))
+            response = s3_client.upload_file(filenames[f], 'labelled1', 'no_ramp/{}'.format(filenames[f]))
             print(filenames[f]+' does not have a ramp')
         
             

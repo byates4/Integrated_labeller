@@ -73,12 +73,13 @@ class labellerPage(tk.Frame):
         tk.geometry("3000x3000")
         tk.configure(background='grey')
         '''
-        #labelgui.s32local('unlabelledimages', 'Temp_S3store/' )
+        labelgui.s32local('unlabelledimages1', 'Temp_S3store/' )
             
         ramp = tk.IntVar()
         ramp.set(1)
         
         labellist = []
+        print(os.getcwd())
         filenames = labelgui.create_filelist()
         print(filenames)
         
