@@ -12,142 +12,83 @@ import boto3
 from PIL import ImageTk,Image
 import os
 
-def resize(filename):      
+def resize(filename):
+    ''' resize image and convert to PIL Image object'''      
+    
     image = str(filename)
     imgsize = Image.open(image).getbbox()
     divisor = int(imgsize[3])
     imgsize1 = int(imgsize[2])/divisor*500
     size = (int(imgsize1), 500)
     imagebig = Image.open(image).resize(size)
-    return imagebig
-
-def chng(filename):
-    sized = resize(filename)
-    photo2 = ImageTk.PhotoImage(sized)
-    panel.config(image = photo2) 
-    panel.photo_ref = photo2 # keep a reference
-    global imnum, labellist, ramp
-    imnum -= 1
-    labellist.append(ramp.get())
-    imagsh = Label(self, image= photo2)
-    imagsh.image = sized
-    imagsh.pack()
-        
+    return imagebig   
 
 def s32local(s3_bucket, local_path):
     #initiate s3 resource
     s3 = boto3.resource('s3')
+    my_bucket = s3.Bucket(s3_bucket) #designate s3 bucket
     
-    # select bucket
-    my_bucket = s3.Bucket(s3_bucket)
-    
-    #ogdir = os.getcwd()
-    #print(ogdir)
     # download images to temp directory
-    os.chdir(local_path)
+    ogdir = os.getcwd() #store original directory
+    print('FUCK' + ogdir)
+    os.chdir(local_path) #set dir for images to be uploaded
     print("Loading Images from S3")
-    ob_tot = len(list(my_bucket.objects.all()))
+    ob_tot = len(list(my_bucket.objects.all())) #count total images to be uploaded
     im_count = 1
+    
     for s3_object in my_bucket.objects.all():
-        # Need to split s3_object.key into path and file name, else it will give error file not found.
         
+        # Need to split s3_object.key into path and file name, else it will give error file not found.
         path, filename = os.path.split(s3_object.key)
-        my_bucket.download_file(s3_object.key, filename)
+        my_bucket.download_file(s3_object.key, filename) #download object as filename
         print("Loaded image " + str(im_count) + " of " + str(ob_tot))
         im_count += 1
-    #os.chdir(ogdir)
+    os.chdir(ogdir) #change back to original directory
 
 def create_filelist():
     filenames = [] 
         #main loop iterating through images in temp file
-    #os.chdir('Temp_S3store')
-    for file in os.listdir(os.getcwd()):
+    og_dir = os.getcwd()
+    os.chdir('Temp_S3store')
+    for file in os.listdir(os.getcwd()): #iterate through directory and collect filenames
          filename = os.fsdecode(file)
          if file.endswith(".jpg") or file.endswith(".png"):
              filenames.append(filename)
              continue
          else:
              continue
-    return filenames
+    os.chdir(og_dir)
+    return filenames #return list of files to be annotated
 
-def upload2s3(labellist, filenames): 
+def upload2s3(labellist, filenames):
+    '''upload labelled images to s3'''
+    
     s3_client = boto3.client('s3')
     print(filenames)
     print(str(len(labellist)) + ' files were labelled')
+    
     for f in range(len(filenames)):
-        if f+1 > len(labellist):
+        if f+1 > len(labellist): #check that there are still images to upload
             break
         if labellist[f] == 2:
-            response = s3_client.upload_file(filenames[f], 'labelled1', 'perpendicular/{}'.format(filenames[f]))
+            s3_client.upload_file(filenames[f], 'labelled1', 'perpendicular/{}'.format(filenames[f]))
             print(filenames[f] + ' is perpendicular')
         if labellist[f] == 3:
-            response = s3_client.upload_file(filenames[f], 'labelled1', 'parallel/{}'.format(filenames[f]))
+            s3_client.upload_file(filenames[f], 'labelled1', 'parallel/{}'.format(filenames[f]))
             print(filenames[f]+' is parallel')
         if labellist[f] == 4:
-            response = s3_client.upload_file(filenames[f], 'labelled1', 'blended_transition/{}'.format(filenames[f]))
+            s3_client.upload_file(filenames[f], 'labelled1', 'blended_transition/{}'.format(filenames[f]))
             print(filenames[f]+' is a blended transition')
         if labellist[f] == 5:
-            response = s3_client.upload_file(filenames[f], 'labelled1', 'not_a_sidewalk/{}'.format(filenames[f]))
+            s3_client.upload_file(filenames[f], 'labelled1', 'not_a_sidewalk/{}'.format(filenames[f]))
             print(filenames[f]+' is fucked up')            
         if labellist[f] == 6:
-            response = s3_client.upload_file(filenames[f], 'labelled1', 'no_ramp/{}'.format(filenames[f]))
+            s3_client.upload_file(filenames[f], 'labelled1', 'no_ramp/{}'.format(filenames[f]))
             print(filenames[f]+' does not have a ramp')
         
             
-def Delete_temps():
-    filelist = [ f for f in os.listdir(os.getcwd()) ]
-    for f in filelist:
+def clear_temps(filenames):
+    for f in filenames:
         if f[-1] == 'g':
             print('deleting ' + f)
             os.remove(f)
-'''
-def close_window (root): 
-    root.destroy()
-'''
-
-
-def labeller():
-    global imnum, panel, labellist, ramp, window
-    #print(os.getcwd())
-    #s32local('unlabelledimages', 'Temp_S3store/' )
-    '''
-    window = Toplevel()
-    
-    window.title("Join")
-    window.geometry("3000x3000")
-    window.configure(background='grey')
-    '''
-    
-    #filenames = create_filelist()
-    #imnum = len(filenames) #number of unlabelled images
-    
-    
-    resized = resize(filenames[0])
-    #Creates a Tkinter-compatible photo image, which can be used everywhere Tkinter expects an image object.
-    img = ImageTk.PhotoImage(resized)
-    #The Label widget is a standard Tkinter widget used to display a text or image on the screen.
-    
-    panel = Label(window, image = img)    
-    panel.pack(side = "bottom", fill = "both", expand = "yes")
-    
-    #ramp = IntVar()
-    #ramp.set(1)
-    
-    labellist = [] 
-    '''
-    Radiobutton(window, text="blended transition", variable = ramp, value=4,indicatoron = 0).pack()
-    Radiobutton(window, text="perpendicular", variable = ramp, value=2,indicatoron = 0).pack()
-    Radiobutton(window, text="parallel", variable = ramp, value=3, indicatoron = 0).pack()
-    Radiobutton(window, text="no ramp", variable = ramp, value=6, indicatoron = 0).pack()
-    Radiobutton(window, text="?", variable = ramp, value=5, indicatoron = 0).pack()
-    Button(window, text="OK", command = lambda: chng(filenames[imnum-1])).pack()
-    Button(window, text = "Done Labelling", command = lambda: close_window(window)).pack(side = BOTTOM)
-    '''      
-    #window.mainloop()
-    print(filenames)    
-    upload2s3(labellist,filenames)
-    
-    Delete_temps()
-    #dchdir('C:/Users/bcyat/Documents/GitHub/Integrated_labeller')
-
-

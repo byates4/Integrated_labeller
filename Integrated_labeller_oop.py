@@ -14,10 +14,12 @@ import Folder_select_GUI as upload
 import convert2train_val_sets as tsets
 import Labeller_GUI3 as labelgui
 import s3_saver
+from labelme import __main__ as annotator
+
 import os
 
 
-LARGE_FONT = ("Verdana", 12)
+LARGE_FONT = ("Verdana", 12) #initialize font
 
 class IntegratedLabeller(tk.Tk):
     def __init__(self, *args, **kwargs):
@@ -25,7 +27,6 @@ class IntegratedLabeller(tk.Tk):
         container = tk.Frame(self)
         
         container.pack(side="top", fill='both', expand= True)
-        
         container.grid_rowconfigure(0, weight=1)
         container.grid_columnconfigure(0, weight=1)
         
@@ -59,63 +60,81 @@ class StartPage(tk.Frame):
         start_image.image = img
         start_image.pack()
         
-        
+        print(os.getcwd())
         butt_upload = tk.Button(self,text ="Upload Images",command = lambda: upload.folder_select()).pack()
-        butt_label = tk.Button(self,text ="Label Images",command = lambda: controller.show_frame(labellerPage)).pack()
+        butt_label = tk.Button(self,text ="Label Images",command = lambda: [controller.show_frame(labellerPage), labellerPage.setup(self)]).pack()
         butt_sets = tk.Button(self,text ="Create Training and Validation Sets",command = lambda: controller.show_frame(tsetPage)).pack()
-        
+        butt_annotate = tk.Button(self, text = 'Annotate Images', command = lambda: [labelgui.s32local('unlabelledimages1', 'Temp_S3store/'), annotator.main()]).pack()      
+
+
 class labellerPage(tk.Frame):
     def __init__(self, parent, controller):
-        global imnum, panel, labellist, ramp
+        global imnum, panel, labellist, ramp, filenames
         tk.Frame.__init__(self, parent)
         '''
         tk.title("Join")
         tk.geometry("3000x3000")
         tk.configure(background='grey')
         '''
-        labelgui.s32local('unlabelledimages1', 'Temp_S3store/' )
-            
-        ramp = tk.IntVar()
-        ramp.set(1)
         
-        labellist = []
-        print(os.getcwd())
-        filenames = labelgui.create_filelist()
-        print(filenames)
-        
-        imnum = len(filenames) #number of unlabelled images
-    
-        print(os.getcwd())
-        resized = labelgui.resize(filenames[-1])
+        resized = labelgui.resize('Labeller_logo.png') #resize and display first image
         #Creates a Tkinter-compatible photo image, which can be used everywhere Tkinter expects an image object.
         img = ImageTk.PhotoImage(resized)
         #The Label widget is a standard Tkinter widget used to display a text or image on the screen.
         
-        panel = tk.Label(self, image = img)
-        panel.image = img
+        panel = tk.Label(self, image=img)
+        #panel.config(image = img)
         panel.pack()
-        print(filenames)
+        panel.photo_ref = img
         
-        tk.Radiobutton(self, text="blended transition", variable = ramp, value=4,indicatoron = 0).pack()
-        tk.Radiobutton(self, text="perpendicular", variable = ramp, value=2,indicatoron = 0).pack()
-        tk.Radiobutton(self, text="parallel", variable = ramp, value=3, indicatoron = 0).pack()
-        tk.Radiobutton(self, text="no ramp", variable = ramp, value=6, indicatoron = 0).pack()
-        tk.Radiobutton(self, text="?", variable = ramp, value=5, indicatoron = 0).pack()
-        tk.Button(self, text="OK", command = lambda: self.chng(filenames[imnum-1]) ).pack()
-        tk.Button(self, text = "Done Labelling", command = lambda: [labelgui.upload2s3(labellist, filenames), controller.show_frame(StartPage) ] ).pack()
         
-
+        ramp = tk.IntVar()
+        ramp.set(1)
+        labellist = []
+        imnum = 0
+        #len(filenames) #number of unlabelled images
+        print('initial dir' + os.getcwd())
         
-    
-    def chng(self, filename):
-        sized = labelgui.resize(filename)
+        try:
+            tk.Radiobutton(self, text="blended transition", variable = ramp, value=4,indicatoron = 0).pack()
+            tk.Radiobutton(self, text="perpendicular", variable = ramp, value=2,indicatoron = 0).pack()
+            tk.Radiobutton(self, text="parallel", variable = ramp, value=3, indicatoron = 0).pack()
+            tk.Radiobutton(self, text="no ramp", variable = ramp, value=6, indicatoron = 0).pack()
+            tk.Radiobutton(self, text="?", variable = ramp, value=5, indicatoron = 0).pack()
+            tk.Button(self, text="OK", command = lambda: self.chng(filenames, controller) ).pack()
+        except:
+            print('dangit')
+        #tk.Button(self, text = "Done Labelling", command = lambda: [labelgui.upload2s3(labellist, filenames), controller.show_frame(StartPage) ] ).pack()
+    def setup(self):
+        global filenames, panel
+        
+        labelgui.s32local('unlabelledimages1', 'Temp_S3store/')
+        filenames = labelgui.create_filelist()
+        #og_dir = os.getcwd()
+        os.chdir('Temp_S3store/')
+        sized = labelgui.resize(filenames[imnum])
         photo2 = ImageTk.PhotoImage(sized)
         panel.config(image = photo2) 
         panel.photo_ref = photo2 # keep a reference
+        
+    
+    def chng(self, filenames, controller):
         global imnum, labellist, ramp
-        imnum -= 1
+        imnum += 1
         labellist.append(ramp.get())
         print(labellist)
+        try:
+            sized = labelgui.resize(filenames[imnum])
+            photo2 = ImageTk.PhotoImage(sized)
+            panel.config(image = photo2) 
+            panel.photo_ref = photo2 # keep a reference
+            
+        except: 
+            print('all images are labelled')
+            labelgui.upload2s3(labellist, filenames)
+            controller.show_frame(StartPage)
+            labelgui.clear_temps(filenames)
+            os.chdir('..')
 
     def done_label(self, filenames):
         IntegratedLabeller.controller.show_frame(StartPage)
@@ -134,7 +153,6 @@ class tsetPage(tk.Frame):
     def download_set2local(self):
         [self.data_dir, image_count] = s3_saver.s3classes2local()
 
-        
         
         
 if __name__ == "__main__":

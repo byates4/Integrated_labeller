@@ -70,13 +70,12 @@ def s3classes2local():
     bucket = "labelled1"
     filenames = file_list(bucket)
     
-    
         
     download_s3_folder('labelled1',filenames)
     return ['Temp_class_store/', len(filenames)]
     
     
-def delete_all_temps():   
+def delete_class_temps():   
     Delete_temps('Temp_class_store/perpendicular')
     Delete_temps('Temp_class_store/blended_transition')
     Delete_temps('Temp_class_store/no_ramp')

@@ -14,7 +14,7 @@ def create_sets(validation_split, data_dir):
     images stored in folders by class name, validation_split should
     be value between 0-1 and data_dir should be a string'''
     data_dir = 'Temp_class_store/'
-    os.chdir('C:/Users/bcyat/Documents/GitHub/Integrated_labeller')
+    
     #Training set Parameters
     batch_size = 32
     img_height = 180
@@ -42,7 +42,7 @@ def create_sets(validation_split, data_dir):
     class_names = train_ds.class_names
     print(class_names)
     print('training and validation sets are preprocessed')
-    s3_saver.delete_all_temps() #delete all locally stored files
+    s3_saver.delete_class_temps() #delete all locally stored files
     
     return [train_ds,val_ds,class_names]
 
