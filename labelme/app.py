@@ -33,7 +33,10 @@ from labelme.widgets import ToolBar
 from labelme.widgets import UniqueLabelQListWidget
 from labelme.widgets import ZoomWidget
 
-
+import boto3
+from datetime import datetime
+import ntpath as nt
+import json
 # FIXME
 # - [medium] Set max zoom value to something big enough for FitWidth/Window
 
@@ -53,7 +56,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def __init__(
         self,
-        config=None,
+        config='deepwalk_config.yaml',
         filename=None,
         output=None,
         output_file=None,
@@ -69,6 +72,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # see labelme/config/default_config.yaml for valid configuration
         if config is None:
             config = get_config()
+            print('what de butt?')
         self._config = config
 
         # set default shape colors
@@ -105,7 +109,10 @@ class MainWindow(QtWidgets.QMainWindow):
             fit_to_content=self._config["fit_to_content"],
             flags=self._config["label_flags"],
         )
-
+        print(self._config["labels"])
+        print(self._config)
+        self.s3_client = boto3.client('s3') #EDIT
+        
         self.labelList = LabelListWidget()
         self.lastOpenDir = None
 
@@ -165,7 +172,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.zoomWidget = ZoomWidget()
         self.setAcceptDrops(True)
-
+        
+        self.imcount = 0 #EDIT
+        
         self.canvas = self.labelList.canvas = Canvas(
             epsilon=self._config["epsilon"],
             double_click=self._config["canvas"]["double_click"],
@@ -208,6 +217,16 @@ class MainWindow(QtWidgets.QMainWindow):
         # Actions
         action = functools.partial(utils.newAction, self)
         shortcuts = self._config["shortcuts"]
+        
+
+        s3 = boto3.resource("s3")
+        self.bucket_main = s3.Bucket('integrated-labeller-main')
+        self.bucket_main.download_file("Annotations.json","Annotations.json")
+        with open('Annotations.json') as f:
+            data = json.load(f)
+        self.annotations = data
+        
+        #print(self.annotations)
         quit = action(
             self.tr("&Quit"),
             self.close,
@@ -1205,7 +1224,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def saveLabels(self, filename):
         lf = LabelFile()
-
+        print('saveLabel function')
         def format_shape(s):
             data = s.other_data.copy()
             data.update(
@@ -1241,6 +1260,14 @@ class MainWindow(QtWidgets.QMainWindow):
                 otherData=self.otherData,
                 flags=flags,
             )
+            print(self.annotations[filename])
+            self.annotations[filename]['regions'] = shapes
+            with open('Annotations.json', 'w') as f:
+                json.dump(self.annotations, f)
+            print(os.getcwd()) 
+            self.bucket_main.upload_file('Annotations.json','Annotations.json')
+            print( self.annotations[filename]["regions"])
+            os.remove("labelme/images/"+filename)
             self.labelFile = lf
             items = self.fileListWidget.findItems(
                 self.imagePath, Qt.MatchExactly
@@ -1467,8 +1494,9 @@ class MainWindow(QtWidgets.QMainWindow):
             if self.imageData:
                 self.imagePath = filename
             self.labelFile = None
+        #CHANGE
         image = QtGui.QImage.fromData(self.imageData)
-
+        print(image)
         if image.isNull():
             formats = [
                 "*.{}".format(fmt.data().decode())
@@ -1595,6 +1623,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.settings.setValue("window/position", self.pos())
         self.settings.setValue("window/state", self.saveState())
         self.settings.setValue("recentFiles", self.recentFiles)
+        #os.chdir('..')
         # ask the use for where to save the labels
         # self.settings.setValue('window/geometry', self.saveGeometry())
 
@@ -1655,7 +1684,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         if len(self.imageList) <= 0:
             return
-
+        
         filename = None
         if self.filename is None:
             filename = self.imageList[0]
@@ -1669,9 +1698,16 @@ class MainWindow(QtWidgets.QMainWindow):
 
         if self.filename and load:
             self.loadFile(self.filename)
-
+        
         self._config["keep_prev"] = keep_prev
-
+        
+# =============================================================================
+#         print('Filename format is: ' + str(self.filename))
+#         upload_filename = nt.basename(str(self.filename))
+#         print('Filename is:' + upload_filename)
+#         self.s3_client.upload_file(str(self.filename), 'annotated-images', upload_filename)
+# =============================================================================
+        
     def openFile(self, _value=False):
         if not self.mayContinue():
             return
@@ -1734,16 +1770,38 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def saveFile(self, _value=False):
         #MODIFIED filename hardcoded to Annotation Directory
+        
         assert not self.image.isNull(), "cannot save empty image"
+# =============================================================================
+#         os.remove(self.filename)
+#         print("deleted "+  os.path.basename(self.filename) + " from local")
+#         self.s3_client.delete_object(Bucket = 'unannotatedimages', Key = os.path.basename(self.filename))
+#         print("deleted "+  os.path.basename(self.filename) + " from S3")
+# =============================================================================
+        
         if self.labelFile:
             # DL20180323 - overwrite when in directory
             self._saveFile(self.labelFile.filename)
+            print('First if')
         elif self.output_file:
+            print('second if')
             self._saveFile(self.output_file)
             self.close()
+# =============================================================================
         else:
-            filename = 'C:/Users/bcyat/Documents/GitHub/Integrated_labeller/Annotations/' + str(date.today()) + '.json'
+            print('Else statement')
+#             date = str(datetime.now())
+#             date = date.replace('.', '_')
+#             date = date.replace(':','_')
+#             date = date.replace('-','_')
+#             date = date.replace(' ','_')
+#             print(date)
+            filename = os.path.basename(os.path.normpath(self.filename))
+#             self.s3_client.delete_object(Bucket = 'imagelabels1', Key = os.path.basename(self.filename))
+            #print(str(self.labelFile()))
+            print(filename + 'this is it')
             self._saveFile(filename)
+# =============================================================================
 
     def saveFileAs(self, _value=False):
         assert not self.image.isNull(), "cannot save empty image"
@@ -1902,7 +1960,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.canvas.endMove(copy=False)
         self.setDirty()
 
-    def openDirDialog(self, _value=False, dirpath='C:/Users/bcyat/Documents/GitHub/Integrated_labeller/Temp_S3store'):
+    def openDirDialog(self, _value=False, dirpath='images/'):
         if not self.mayContinue():
             return
 
@@ -1913,8 +1971,8 @@ class MainWindow(QtWidgets.QMainWindow):
             defaultOpenDirPath = (
                 osp.dirname(self.filename) if self.filename else "."
             )
-
-        targetDirPath = 'C:/Users/bcyat/Documents/GitHub/Integrated_labeller/Temp_S3store'
+        print(os.getcwd())
+        targetDirPath = 'labelme/images/'
         '''str(
             
             QtWidgets.QFileDialog.getExistingDirectory(
@@ -2008,6 +2066,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 if file.lower().endswith(tuple(extensions)):
                     relativePath = osp.join(root, file)
                     images.append(relativePath)
+                    
         images.sort(key=lambda x: x.lower())
         return images
 

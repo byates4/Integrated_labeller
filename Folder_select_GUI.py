@@ -38,9 +38,9 @@ def upload_file(file_name, bucket, object_name=None):
         return False
     return True
 
-def folder_select():
+def folder_select(root):
     #get image directory
-    root = Tk()
+    
     og_dir = os.getcwd() #store original directory
     root.directory = filedialog.askdirectory() #brings up tkinter file dialog window
     directory_in_str = root.directory #gets directory name as string
@@ -52,7 +52,7 @@ def folder_select():
          filename = os.fsdecode(file)
          
          if filename.endswith(".jpg") or filename.endswith(".png"): #check that it's an image
-             upload_file(filename, "unlabelledimages1") #upload file to s3 bucket
+             upload_file(filename, "unsorted-images1") #upload file to s3 bucket
              continue
          else:
              continue

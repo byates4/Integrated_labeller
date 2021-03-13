@@ -193,6 +193,9 @@ class LabelFile(object):
             imageHeight=imageHeight,
             imageWidth=imageWidth,
         )
+        
+        #self.annotations[filename]["regions"] = shapes
+        
         for key, value in otherData.items():
             assert key not in data
             data[key] = value

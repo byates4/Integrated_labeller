@@ -42,7 +42,7 @@ def create_sets(validation_split, data_dir):
     class_names = train_ds.class_names
     print(class_names)
     print('training and validation sets are preprocessed')
-    s3_saver.delete_class_temps() #delete all locally stored files
+    
     
     return [train_ds,val_ds,class_names]
 
