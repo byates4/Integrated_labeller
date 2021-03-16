@@ -85,7 +85,7 @@ class LabelDialog(QtWidgets.QDialog):
             )
         self._sort_labels = sort_labels
         if True:
-            self.labelList.addItems(['Landing', 'Ramp', 'Detectable Warning', 'Approach'])
+            self.labelList.addItems(['Panel'])
         if self._sort_labels:
             self.labelList.sortItems()
         else:

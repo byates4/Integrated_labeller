@@ -82,6 +82,7 @@ class StartPage(tk.Frame):
         start_image.image = img #making copy prevents pyimage# error
         start_image.pack()
         
+        #CUBE
         def load_ann():
             #Load Annotations
             s3 = boto3.resource("s3")
